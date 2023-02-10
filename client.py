@@ -1,80 +1,65 @@
+"""A client that connects to a server and sends messages to it"""
 import socket
-import selectors
+import threading
 
-from messaging import Message, MessageTypes
+
+from messaging import Message
 from game import Game
 
 
 class Client:
+    """A client that connects to a server and sends messages to it"""
     def __init__(self, client_host: str, client_port: int, game: Game):
         self.host = client_host
         self.port = client_port
-        self.sel = selectors.DefaultSelector()
-        self.start_connection()
-        self.__send_buffer = b''
-        self.__recv_buffer = b''
-        self.game = game
-
-    def start_connection(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         addr = (self.host, self.port)
-        print(f"Starting connection to {addr}")
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setblocking(False)
-        sock.connect_ex(addr)  # just connect will raise an exception if the connection fails
-        # TODO: Handle the exception
-        events = selectors.EVENT_READ | selectors.EVENT_WRITE
-        message = Message(MessageTypes.GET_QUESTION, None)
+        self.sock.connect(addr)
 
-        self.sel.register(sock, events, data=message)
+        self.input_thread = None
+        self.response_thread = None
 
-    def read(self, message, sock):
-        received_data = sock.recv(1024)  # TODO: Fix hard-coded buffer size
-        if received_data:
-            received_message = message.from_bytes(received_data)
-            print(f"Received {received_message} from server")
-            response = self.game.process_server_message(received_message)
-            if response is not None:
-                self.write(sock, response)
-            else:
-                print(f"Closing connection")
-                self.sel.unregister(sock)
-                sock.close()
-        if not received_data:
-            print(f"Closing connection")
-            self.sel.unregister(sock)  # Stop monitoring the socket
-            sock.close()
+        self.game = game
+        self.still_running = False
 
-    def write(self, sock, message: Message = None):
-        if message is not None:
-            self.__send_buffer = message.to_bytes()
-
-        if self.__send_buffer:
-            print(f"Sending {self.__send_buffer} to server")
-            sent_bytes = sock.send(self.__send_buffer)
-            self.__send_buffer = self.__send_buffer[sent_bytes:]
-
-    def service_connection(self, key, mask):
-        sock = key.fileobj
-        message = key.data
-        if mask & selectors.EVENT_READ:
-            self.read(message, sock)
-        if mask & selectors.EVENT_WRITE:
-            self.write(sock)
+    def receive_message(self):
+        """Receive a message from the server and process it"""
+        while self.still_running:
+            data = self.sock.recv(1024)
+            if data:
+                message = Message.from_bytes(data)
+                print(f"Received {message} from server")
+                response = self.game.process_server_message(message)
+                if response is not None:
+                    self.sock.sendall(response)
+                else:
+                    print("Closing connection")
+                    self.sock.close()
+                    break
+            if not data:
+                print("Closing connection")
+                self.sock.close()
+                break
+    def repl(self):
+        """Read-eval-print loop"""
+        print("Welcome!")
+        while self.still_running:
+            command = input("> ")
+            command = command.lower()
+            if command == "exit":
+                print("Goodbye!")
+                self.still_running = False
+                self.sock.close()
+                break
 
     def run(self):
-        try:
-            while True:
-                events = self.sel.select(timeout=1)
-                for key, mask in events:
-                    self.service_connection(key, mask)
-                if not self.sel.get_map():
-                    break
-        except KeyboardInterrupt:
-            print("Caught keyboard interrupt, exiting")
-        finally:
-            self.sel.close()
+        """Start the client"""
+        self.still_running = True
+        self.input_thread = threading.Thread(target=self.repl)
+        self.input_thread.start()
 
-
+        self.response_thread = threading.Thread(target=self.receive_message)
+        self.response_thread.start()
 
 if __name__ == "__main__":
     host, port = '127.0.0.1', 65432
