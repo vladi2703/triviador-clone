@@ -18,7 +18,7 @@ class Server:
         self.sel = selectors.DefaultSelector()
         self.__output_buf = b''
         self.player_database = PlayerDatabase('players.txt')
-        self.message_queue = MessageQueue()
+        self.message_queue_dict: dict[int, MessageQueue] = {}
 
     def start(self):
         lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -43,10 +43,12 @@ class Server:
             self.sel.close()
 
     def accept_wrapper(self, sock):
+        print(type(sock))
         conn, addr = sock.accept()
         print(f"Accepted connection from {addr}")
         _, pesho = addr
         self.player_database.add_player(pesho)  # player name is the address
+        self.message_queue_dict[sock.getsockname()[1]] = MessageQueue()
         conn.setblocking(False)
         message = Message(MessageTypes.ACTIVE_STATUS, None)
         # Register the socket to be monitored for read events
@@ -58,27 +60,28 @@ class Server:
             message = message.from_bytes(received_data)
             response = self.game.process_client_message(message, self.player_database)
             if response is not None:
-                self.__output_buf = response.to_bytes()
-                sent_bytes = sock.send(self.__output_buf)
-                self.__output_buf = self.__output_buf[sent_bytes:]
+                # self.__output_buf = response.to_bytes()
+                # sent_bytes = sock.send(self.__output_buf)
+                # self.__output_buf = self.__output_buf[sent_bytes:]
+                self.message_queue_dict[sock.getsockname()[1]].add_message(response)
             else:
-                print(f"Closing connection")
+                print("Closing connection")
                 self.sel.unregister(sock)
                 sock.close()
         else:
-            print(f"Closing connection")
+            print("Closing connection")
             self.sel.unregister(sock)
             sock.close()
 
-    def write(self, sock):
-        if not self.__output_buf and self.message_queue:
-            created_message = Message(MessageTypes.QUESTION, {'question': 'What is the answer to life, the '
-                                                                          'universe, and everything?'})
-            self.__output_buf = created_message.to_bytes()
-        if self.__output_buf:
-            print(f"Sending {self.__output_buf}")
-            sent = sock.send(self.__output_buf)
-            self.__output_buf = self.__output_buf[sent:]
+    def write(self, sock, message: Message):
+        if message is not None:
+            send_buffer = message.to_bytes()
+            sent_bytes = sock.send(send_buffer)
+
+        if send_buffer:
+            print(f"Sending {send_buffer} to client")
+            send_buffer = send_buffer[sent_bytes:]
+
 
     def service_connection(self, key, mask):
         sock = key.fileobj
@@ -86,4 +89,6 @@ class Server:
         if mask & selectors.EVENT_READ:
             self.read(message, sock)
         if mask & selectors.EVENT_WRITE:
-            self.write(sock)  # TODO: Implement this
+            if self.message_queue_dict[sock.getsockname()[1]]:
+                response = self.message_queue_dict[sock.getsockname()[1]].get_top_message()
+                sock.send(response.to_bytes())

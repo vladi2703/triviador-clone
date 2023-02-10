@@ -3,7 +3,7 @@ import socket
 import threading
 
 
-from messaging import Message
+from messaging import Message, MessageTypes
 from game import Game
 
 
@@ -20,25 +20,30 @@ class Client:
         self.response_thread = None
 
         self.game = game
+      
         self.still_running = False
 
     def receive_message(self):
         """Receive a message from the server and process it"""
         while self.still_running:
-            data = self.sock.recv(1024)
+            print("Waiting for message from server")
+            try:
+                data = self.sock.recv(1024)
+            except ConnectionResetError:
+                print("Connection was reset by the server")
+                self.still_running = False
+                break
             if data:
+                print(f"Received {data} from server")
                 message = Message.from_bytes(data)
                 print(f"Received {message} from server")
                 response = self.game.process_server_message(message)
                 if response is not None:
                     self.sock.sendall(response)
-                else:
-                    print("Closing connection")
-                    self.sock.close()
-                    break
             if not data:
                 print("Closing connection")
                 self.sock.close()
+                self.still_running = False
                 break
     def repl(self):
         """Read-eval-print loop"""
@@ -51,6 +56,11 @@ class Client:
                 self.still_running = False
                 self.sock.close()
                 break
+            elif command == "question":
+                message = Message(message_type=MessageTypes.GET_QUESTION)
+                self.sock.sendall(message.to_bytes())
+            else:
+                print("Unknown command")
 
     def run(self):
         """Start the client"""

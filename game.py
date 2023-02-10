@@ -1,3 +1,5 @@
+"""Game logic for the client and server."""
+
 from database import PlayerDatabase
 from messaging import Message, MessageTypes
 from question import Question
@@ -21,6 +23,8 @@ class Game:
                 return Message(MessageTypes.CORRECT_ANSWER)
             else:
                 return Message(MessageTypes.INCORRECT_ANSWER, {"correct_answer": self.currentQuestion.correct_answer})
+        elif message.header.message_type == MessageTypes.ACTIVE_STATUS:
+            return Message(MessageTypes.ACTIVE_STATUS)
         elif message.header.message_type == MessageTypes.DISCONNECT.value:
             return None
         else:
@@ -29,7 +33,6 @@ class Game:
     @staticmethod
     def process_server_message(message: Message):
         """Process a message from the server."""
-
         if message.header.message_type == MessageTypes.QUESTION.value:
             print("Question received from server")
             question = Question.from_json_for_client(message.body["question_data"])
@@ -37,7 +40,8 @@ class Game:
         elif message.header.message_type == MessageTypes.CORRECT_ANSWER.value:
             print("Correct answer!")
         elif message.header.message_type == MessageTypes.INCORRECT_ANSWER.value:
-            print("Unfortunately, your answer is incorrect. Correct answer is: " + message.body["correct_answer"])
-
-
-
+            print("Unfortunately, your answer is incorrect. \
+                Correct answer is: " + message.body["correct_answer"])
+        elif message.header.message_type == MessageTypes.ACTIVE_STATUS.value:
+            print("You've been acknowledged as active by the server.")
+        
