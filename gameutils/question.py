@@ -72,7 +72,7 @@ class Question:
         if q_type is not None:
             params["type"] = q_type
         if encode is not None:
-            params["encode"] = encode
+            params["encoding"] = encode
 
         return requests.Request("GET", base_url, params=params).prepare().url
     @staticmethod

@@ -4,7 +4,7 @@ import threading
 
 
 from messagingutils.messaging import Message, MessageTypes
-from test import Game
+from gameutils.game import Game
 
 
 class Client:

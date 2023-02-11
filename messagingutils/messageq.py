@@ -1,6 +1,6 @@
 import collections
 from collections import deque
-from messaging import Message
+from messagingutils.messaging import Message
 
 
 class MessageQueue:
