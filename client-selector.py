@@ -2,7 +2,7 @@ import socket
 import selectors
 
 from messagingutils.messaging import Message, MessageTypes
-from gameutils.game import Game
+from test import Game
 
 
 class Client:

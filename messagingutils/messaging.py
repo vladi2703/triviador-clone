@@ -31,25 +31,26 @@ class MessageHeader:
     @classmethod
     def from_bytes(cls, data):
         print(json.loads(data.decode()))
-        return cls(**json.loads(data.decode()))
+        json_data = json.loads(data.decode())
+        return cls(MessageTypes(MessageTypes(json_data["message_type"])), json_data["body_len"])
 
     def __str__(self):
         return f"{self.message_type=} \n {self.body_len=}"
 
-
-class MessageBody:
-    def __init__(self, body: dict):
-        self.body = body
-
-    def to_bytes(self):
-        return json.dumps(self.body).encode()
-
-    @classmethod
-    def from_bytes(cls, data):
-        return cls(**json.loads(data.decode()))
-
-    def __str__(self):
-        return f"{self.body=}"
+# Todo: remove this class if not needed
+# class MessageBody:
+#     def __init__(self, body: dict):
+#         self.body = body
+#
+#     def to_bytes(self):
+#         return json.dumps(self.body).encode()
+#
+#     @classmethod
+#     def from_bytes(cls, data):
+#         return cls(**json.loads(data.decode()))
+#
+#     def __str__(self):
+#         return f"{self.body=}"
 
 
 class Message:
@@ -85,7 +86,7 @@ if __name__ == '__main__':
     # print(mes_bytes)
     # print(from_bytes)
 
-    from gameutils.question import Question
+    from test import Question
     question = Question.get_one_question(difficulty="easy")
     mes = Message(MessageTypes.QUESTION, {"question_data": question.to_json_for_client()})
     mes_bytes = mes.to_bytes()

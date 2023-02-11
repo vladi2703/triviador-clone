@@ -1,7 +1,6 @@
 import collections
 from collections import deque
 from messaging import Message
-from typing import Tuple
 
 
 class MessageQueue:

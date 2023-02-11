@@ -1,9 +1,9 @@
 import socket
 import selectors
 
-from gameutils.database import PlayerDatabase
+from test import PlayerDatabase
 from messagingutils.messaging import Message, MessageTypes
-from gameutils.game import Game
+from test import Game
 from messagingutils.messageq import MessageQueue
 
 

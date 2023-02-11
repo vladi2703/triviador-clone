@@ -1,5 +1,5 @@
 import html
-import json
+
 
 import requests
 
@@ -59,9 +59,8 @@ class Question:
         return questions[0]
 
     @staticmethod
-    def get_questions_by_params(category=None, difficulty=None, q_type=None, amount=10, encode="utf-8"):
-        """Get questions from the API. Returns a list of Question objects."""
-
+    def get_url(category=None, difficulty=None, q_type=None, amount=10, encode="utf-8") -> str:
+        """Get the base url for the API. Returns a string."""
         base_url = "https://opentdb.com/api.php?"
         params = {
             "amount": amount
@@ -72,8 +71,16 @@ class Question:
             params["difficulty"] = difficulty
         if q_type is not None:
             params["type"] = q_type
+        if encode is not None:
+            params["encode"] = encode
 
-        response = requests.get(base_url, params=params)
+        return requests.Request("GET", base_url, params=params).prepare().url
+    @staticmethod
+    def get_questions_by_params(category=None, difficulty=None, q_type=None, amount=10, encode="utf-8") -> list:
+        """Get questions from the API. Returns a list of Question objects."""
+
+        base_url = Question.get_url(category, difficulty, q_type, amount, encode)
+        response = requests.get(base_url)
 
         if response.status_code == 200:
             results = response.json()["results"]

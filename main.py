@@ -1,5 +1,5 @@
 from server import Server
-from gameutils.game import Game
+from test import Game
 
 if __name__ == "__main__":
     HOST = '127.0.0.1'
