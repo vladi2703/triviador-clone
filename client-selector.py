@@ -1,10 +1,8 @@
 import socket
 import selectors
-import threading
 
-
-from messaging import Message, MessageTypes
-from game import Game
+from messagingutils.messaging import Message, MessageTypes
+from gameutils.game import Game
 
 
 class Client:

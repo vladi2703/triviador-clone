@@ -1,10 +1,10 @@
 import socket
 import selectors
 
-from database import PlayerDatabase
-from messaging import Message, MessageTypes
-from game import Game
-from messageq import MessageQueue
+from gameutils.database import PlayerDatabase
+from messagingutils.messaging import Message, MessageTypes
+from gameutils.game import Game
+from messagingutils.messageq import MessageQueue
 
 
 class Server:
@@ -43,11 +43,13 @@ class Server:
             self.sel.close()
 
     def accept_wrapper(self, sock):
-        print(type(sock))
         conn, addr = sock.accept()
-        print(f"Accepted connection from {addr}")
         _, pesho = addr
-        self.player_database.add_player(pesho)  # player name is the address
+        if not self.player_database.add_player(pesho):  # player name is the address
+            pass  # TODO: Send message to client that the name is already taken
+            # sock.close()
+            # return
+        print(f"Accepted connection from {addr}")
         self.message_queue_dict[sock.getsockname()[1]] = MessageQueue()
         conn.setblocking(False)
         message = Message(MessageTypes.ACTIVE_STATUS, None)
@@ -60,9 +62,6 @@ class Server:
             message = message.from_bytes(received_data)
             response = self.game.process_client_message(message, self.player_database)
             if response is not None:
-                # self.__output_buf = response.to_bytes()
-                # sent_bytes = sock.send(self.__output_buf)
-                # self.__output_buf = self.__output_buf[sent_bytes:]
                 self.message_queue_dict[sock.getsockname()[1]].add_message(response)
             else:
                 print("Closing connection")
@@ -72,16 +71,6 @@ class Server:
             print("Closing connection")
             self.sel.unregister(sock)
             sock.close()
-
-    def write(self, sock, message: Message):
-        if message is not None:
-            send_buffer = message.to_bytes()
-            sent_bytes = sock.send(send_buffer)
-
-        if send_buffer:
-            print(f"Sending {send_buffer} to client")
-            send_buffer = send_buffer[sent_bytes:]
-
 
     def service_connection(self, key, mask):
         sock = key.fileobj

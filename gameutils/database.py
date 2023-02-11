@@ -5,7 +5,7 @@ class PlayerDatabase:
 
     def __init__(self, filename):
         self.filename = filename
-        self.players = {}
+        self.players: dict[int, int] = {}
 
         if os.path.exists(self.filename):
             with open(self.filename, 'r') as f:
@@ -13,9 +13,14 @@ class PlayerDatabase:
                     name, score = line.strip().split()  # TODO: fix format error
                     self.players[name] = int(score)
 
-    def add_player(self, name):
+    def add_player(self, name) -> bool:
+        """Add a player to the database. Return True if the player was added, False else."""
+        if len(self.players) > 3 or self.players.get(name) != 0:
+            print(f"Player {name} already exists or player limit reached")
+            return False
         self.players[name] = 0
         self.save()
+        return True
 
     def update_score(self, name, score):
         self.players[name] = score

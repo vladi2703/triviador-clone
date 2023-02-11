@@ -3,13 +3,13 @@ import socket
 import threading
 
 
-from messaging import Message, MessageTypes
-from game import Game
+from messagingutils.messaging import Message, MessageTypes
+from gameutils.game import Game
 
 
 class Client:
     """A client that connects to a server and sends messages to it"""
-    def __init__(self, client_host: str, client_port: int, game: Game):
+    def __init__(self, client_host: str, client_port: int):
         self.host = client_host
         self.port = client_port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,8 +18,6 @@ class Client:
 
         self.input_thread = None
         self.response_thread = None
-
-        self.game = game
       
         self.still_running = False
 
@@ -37,7 +35,7 @@ class Client:
                 print(f"Received {data} from server")
                 message = Message.from_bytes(data)
                 print(f"Received {message} from server")
-                response = self.game.process_server_message(message)
+                response = Game.process_server_message(message)
                 if response is not None:
                     self.sock.sendall(response)
             if not data:
@@ -74,5 +72,5 @@ class Client:
 if __name__ == "__main__":
     host, port = '127.0.0.1', 65432
 
-    client = Client(host, port, Game())
+    client = Client(host, port)
     client.run()

@@ -12,6 +12,7 @@ class MessageTypes(Enum):
     INCORRECT_ANSWER = 5
     REQUEST_ACTIVE_STATUS = 7
     ACTIVE_STATUS = 8
+    LOBBY_ALREADY_FULL = 9
 
     def to_json(self):
         return self.value
@@ -84,7 +85,7 @@ if __name__ == '__main__':
     # print(mes_bytes)
     # print(from_bytes)
 
-    from question import Question
+    from gameutils.question import Question
     question = Question.get_one_question(difficulty="easy")
     mes = Message(MessageTypes.QUESTION, {"question_data": question.to_json_for_client()})
     mes_bytes = mes.to_bytes()

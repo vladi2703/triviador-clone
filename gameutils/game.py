@@ -1,7 +1,7 @@
 """Game logic for the client and server."""
 
 from database import PlayerDatabase
-from messaging import Message, MessageTypes
+from messagingutils.messaging import Message, MessageTypes
 from question import Question
 
 
