@@ -50,7 +50,14 @@ class Client:
                     self._display_board = BoardDisplay(self._board)
                 else:
                     self._display_board.update_board(self._board)
+                display_thread = threading.Thread(target=self._display_board.mainloop())
+                display_thread.start()
+        elif message.header.message_type == MessageTypes.REQUEST_MOVE_PLAYER:
+            print("Requesting move player")
+            if self._display_board is not None:
                 self._display_board.mainloop()
+                move = await self._display_board.get_move()
+                return Message(MessageTypes.MOVE_PLAYER, {"move": move.to_dict()}).to_bytes()
 
     async def receive_message(self):
         """Receive a message from the server and process it"""

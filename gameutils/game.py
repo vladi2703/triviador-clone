@@ -34,5 +34,8 @@ class Game:
                 return Message(MessageTypes.BOARD, {"board": None})
         elif message.header.message_type == MessageTypes.DISCONNECT:
             return None
+        elif message.header.message_type == MessageTypes.MOVE_PLAYER:
+            if board is not None:
+                board.process_turn(message.body["move"])
         else:
             raise ValueError(f"Unknown message type: {message.header.message_type}")

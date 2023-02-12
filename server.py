@@ -64,8 +64,10 @@ class Server:
             self.board = Board(players=players)
             for(player_id, message_queue) in self.message_queue_dict.items():
                 message_queue.add_message(Message(MessageTypes.BOARD, {"board": self.board.serialize()}))
-
+            curr_player = self.board.current_player
+            self.message_queue_dict[curr_player.name].add_message(Message(MessageTypes.REQUEST_MOVE_PLAYER, None))
         conn.setblocking(False)
+
         message = Message(MessageTypes.ACTIVE_STATUS, None)
         # Register the socket to be monitored for read events
         self.sel.register(conn, selectors.EVENT_READ | selectors.EVENT_WRITE, data=message)

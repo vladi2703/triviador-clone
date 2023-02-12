@@ -1,4 +1,5 @@
 """A module representing the game board"""
+import asyncio
 import json
 import threading
 import tkinter as tk
@@ -126,6 +127,9 @@ class BoardDisplay(tk.Tk):
                                                        for _ in range(self.board.board_size)]
         self._create_widgets()
 
+        self._event_move = asyncio.Event()
+        self._current_move: Turn | None = None
+
     def _setup_display(self):
         display_frame = tk.Frame(master=self)
         display_frame.pack(fill=tk.X)
@@ -142,13 +146,26 @@ class BoardDisplay(tk.Tk):
                 self._widgets[row][col] = tk.Button(master=self.board_frame, text=" ", bg='white', width=10, height=8)
                 self._cities[self._widgets[row][col]] = (row, col)  # store the cell position in a dictionary
                 self._widgets[row][col].grid(row=row, column=col, sticky="nsew")
-                self._widgets[row][col].bind("<Button-1>", partial(self._play_turn))
+                self._widgets[row][col].bind("<Button-1>", partial(self.process_move))
 
-    def _play_turn(self, event):
-        """Play a turn"""
+    def process_move(self, event):
+        """Get the move from the user"""
         clicked_cell = event.widget
         row, col = self._cities[clicked_cell]
         turn = Turn(row, col, self.board.current_player.color)
+        if self.board.is_valid_move(turn):
+            self._current_move = turn
+            self._event_move.set()
+
+    async def get_move(self):
+        """Get the move from the user"""
+        await self._event_move.wait()
+        self._event_move.clear()
+        return self._current_move
+
+    def play_turn(self, turn: Turn):
+        """Play a turn"""
+        clicked_cell = self._widgets[turn.row][turn.col]
         if self.board.is_valid_move(turn):
             self.board.process_turn(turn)
             clicked_cell.config(bg=self.board.current_player.color)

@@ -15,6 +15,8 @@ class MessageTypes(Enum):
     LOBBY_ALREADY_FULL = 9
     REQUEST_BOARD = 10
     BOARD = 11
+    REQUEST_MOVE_PLAYER = 12
+    MOVE_PLAYER = 13
 
     def to_json(self):
         return self.value

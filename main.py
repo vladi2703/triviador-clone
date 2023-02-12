@@ -13,4 +13,3 @@ if __name__ == "__main__":
 
     server = Server(HOST, PORT, game)
     server.start()
-
