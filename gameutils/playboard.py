@@ -1,4 +1,4 @@
-"""A class representing the game board"""
+"""A module representing the game board"""
 import json
 import pickle
 import threading
@@ -103,7 +103,7 @@ class Board:
         """Deserialize the board"""
         data = json.loads(json_string)
         board_size = data['board_size']
-        players = [Player(**player) for player in data['players']]
+        players = tuple(Player(**player) for player in data['players'])
         new_board = cls(board_size, players)
         new_board.board = [[Turn(**cell) for cell in row] for row in data['board']]
         new_board.current_player = Player(**data['current_player'])

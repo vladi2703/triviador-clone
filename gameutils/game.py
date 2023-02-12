@@ -37,19 +37,18 @@ class Game:
         else:
             raise ValueError(f"Unknown message type: {message.header.message_type}")
 
-    @staticmethod
-    # TODO: Remove this if not used at the end
-    def process_server_message(message: Message):
-        """Process a message from the server."""
-        if message.header.message_type == MessageTypes.QUESTION:
-            print("Question received from server")
-            question = Question.from_json_for_client(message.body["question_data"])
-            print(question)
-        elif message.header.message_type == MessageTypes.CORRECT_ANSWER:
-            print("Correct answer!")
-        elif message.header.message_type == MessageTypes.INCORRECT_ANSWER:
-            print("Unfortunately, your answer is incorrect. \
-                Correct answer is: " + message.body["correct_answer"])
-        elif message.header.message_type == MessageTypes.ACTIVE_STATUS:
-            print("You've been acknowledged as active by the server.")
-        
+    # @staticmethod
+    # # TODO: Remove this if not used at the end
+    # def process_server_message(message: Message):
+    #     """Process a message from the server."""
+    #     if message.header.message_type == MessageTypes.QUESTION:
+    #         print("Question received from server")
+    #         question = Question.from_json_for_client(message.body["question_data"])
+    #         print(question)
+    #     elif message.header.message_type == MessageTypes.CORRECT_ANSWER:
+    #         print("Correct answer!")
+    #     elif message.header.message_type == MessageTypes.INCORRECT_ANSWER:
+    #         print("Unfortunately, your answer is incorrect. \
+    #             Correct answer is: " + message.body["correct_answer"])
+    #     elif message.header.message_type == MessageTypes.ACTIVE_STATUS:
+    #         print("You've been acknowledged as active by the server.")

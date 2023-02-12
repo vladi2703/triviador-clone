@@ -10,6 +10,9 @@ from messagingutils.messageq import MessageQueue
 
 class Server:
     """A server that handles incoming connections and messages."""
+
+    # server and client classes won't be tested, because they are mainly network-related, these things are not object
+    # to unit testing
     def __init__(self, host: str, port: int, game: Game):
         if port < 1024:
             raise ValueError("Port must be greater than 1024")
