@@ -13,6 +13,8 @@ class MessageTypes(Enum):
     REQUEST_ACTIVE_STATUS = 7
     ACTIVE_STATUS = 8
     LOBBY_ALREADY_FULL = 9
+    REQUEST_BOARD = 10
+    BOARD = 11
 
     def to_json(self):
         return self.value
@@ -76,22 +78,3 @@ class Message:
 
     def __str__(self):
         return f"{self.header.__str__()=} \n {self.body=}"
-
-
-# TODO: Use this for testing
-if __name__ == '__main__':
-    # mes = Message(MessageTypes.DISCONNECT, {"test": "test", "pesho": "pesho"})
-    # mes_bytes = mes.to_bytes()
-    # from_bytes = Message.from_bytes(mes_bytes)
-    # print(mes_bytes)
-    # print(from_bytes)
-
-    from test import Question
-    question = Question.get_one_question(difficulty="easy")
-    mes = Message(MessageTypes.QUESTION, {"question_data": question.to_json_for_client()})
-    mes_bytes = mes.to_bytes()
-    from_bytes = Message.from_bytes(mes_bytes)
-    print(mes_bytes)
-    print(from_bytes)
-    quest_new = Question.from_json_for_client(from_bytes.body["question_data"])
-    print(quest_new)

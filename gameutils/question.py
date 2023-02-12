@@ -51,7 +51,8 @@ class Question:
         )
 
     def __str__(self):
-        return f"{self.category=} \n{self.difficulty=} \n{self.question_type=} \n{self.question=} \n{self.correct_answer=} \n{self.incorrect_answers=} \n {self.possible_answers=}"
+        return f"{self.category=} \n{self.difficulty=} \n{self.question_type=} \n{self.question=} " \
+               f"\n{self.correct_answer=} \n{self.incorrect_answers=} \n {self.possible_answers=}"
 
     @classmethod
     def get_one_question(cls, category=None, difficulty=None, q_type=None, encode="utf-8"):

@@ -1,5 +1,6 @@
 """A class representing the game board"""
-import asyncio
+import json
+import pickle
 import threading
 import tkinter as tk
 from functools import partial
@@ -12,11 +13,25 @@ class Player(NamedTuple):
     name: int
     color: str
 
+    def to_dict(self):
+        return {"name": self.name, "color": self.color}
+
+    @classmethod
+    def from_dict(cls, data):
+        return Player(data["name"], data["color"])
+
 
 class Turn(NamedTuple):
     row: int
     col: int
     color: str = "white"
+
+    def to_dict(self):
+        return {"row": self.row, "col": self.col, "color": self.color}
+
+    @classmethod
+    def from_dict(cls, data):
+        return Turn(data["row"], data["col"], data["color"])
 
 
 DEFAULT_BOARD_SIZE = 3
@@ -49,7 +64,7 @@ class Board:
         """Check if the move is valid"""
         return self.board[move.row][move.col].color == "white"
 
-    # TODO: Implement the of cases, when attaking for example
+    # TODO: Implement the of cases, when attacking for example
 
     def process_turn(self, turn: Turn):
         """Process a turn"""
@@ -67,6 +82,32 @@ class Board:
                 return False
         return True
 
+    def serialize(self) -> str:
+        """Serialize the board"""
+        board = [[cell.to_dict() for cell in row] for row in self.board]
+        players = [player.to_dict() for player in self.players]
+        return json.dumps({
+            'board_size': self.board_size,
+            'board': board,
+            'players': players,
+            'current_player': self.current_player.to_dict(),
+            'current_turns': [turn.to_dict() for turn in self._current_turns],
+            'has_winner': self._has_winner
+        })
+
+    @classmethod
+    def deserialize(cls, json_string: str):
+        """Deserialize the board"""
+        data = json.loads(json_string)
+        board_size = data['board_size']
+        players = [Player(**player) for player in data['players']]
+        new_board = cls(board_size, players)
+        new_board.board = [[Turn(**cell) for cell in row] for row in data['board']]
+        new_board.current_player = Player(**data['current_player'])
+        new_board._current_turns = [Turn(**turn) for turn in data['current_turns']]
+        new_board._has_winner = data['has_winner']
+        return new_board
+
 
 class BoardDisplay(tk.Tk):
     def __init__(self, board: Board):
@@ -75,6 +116,8 @@ class BoardDisplay(tk.Tk):
         self.board = board
         self._cities = {}
         self._setup_display()
+        self._widgets: List[List[tk.Button | None]] = [[None for _ in range(self.board.board_size)]
+                                                       for _ in range(self.board.board_size)]
         self._create_widgets()
 
     def _setup_display(self):
@@ -90,10 +133,10 @@ class BoardDisplay(tk.Tk):
             self.rowconfigure(row, weight=1, minsize=75)
             self.columnconfigure(row, weight=1, minsize=75)
             for col in range(self.board.board_size):
-                cell = tk.Button(master=self.board_frame, text=" ", bg='white', width=10, height=8)
-                self._cities[cell] = (row, col)  # store the cell position in a dictionary
-                cell.grid(row=row, column=col, sticky="nsew")
-                cell.bind("<Button-1>", self._play_turn)
+                self._widgets[row][col] = tk.Button(master=self.board_frame, text=" ", bg='white', width=10, height=8)
+                self._cities[self._widgets[row][col]] = (row, col)  # store the cell position in a dictionary
+                self._widgets[row][col].grid(row=row, column=col, sticky="nsew")
+                self._widgets[row][col].bind("<Button-1>", partial(self._play_turn))
 
     def _play_turn(self, event):
         """Play a turn"""
@@ -109,6 +152,13 @@ class BoardDisplay(tk.Tk):
             else:
                 self.board.next_turn()
                 self.display.config(text=f"{self.board.current_player.name} turn")
+
+    def update_board(self, board: Board):
+        """Update the board"""
+        self.board = board
+        for row in range(self.board.board_size):
+            for col in range(self.board.board_size):
+                self._widgets[row][col].config(bg=self.board.board[row][col].color)
 
 
 class QuestionDisplay:
@@ -140,7 +190,8 @@ class QuestionDisplay:
         """Return answer to client. Give feedback to user. Wait 2-3 seconds and then close window."""
         if self._answer != "":
             return
-        label = tk.Label(self.root, text=f"answer given: {answer}", font=("Arial", 20))
+        label = tk.Label(self.root, text=f"answer given: {answer}",
+                         font=("Arial", 15), wraplength=500, justify=tk.CENTER)
         label.pack()
         self._answer = answer
         self.root.update()
@@ -167,9 +218,11 @@ class QuestionDisplay:
 
 
 if __name__ == "__main__":
-    # board = Board(players=(Player(1, "red"), Player(2, "blue"), Player(3, "green")))
-    # display = BoardDisplay(board)
-    # display.mainloop()
-    question = Question.get_one_question(difficulty='easy')
-    display = QuestionDisplay(question)
-    display.prompt_question()
+    board_1 = Board(players=(Player(1, "red"), Player(2, "blue"), Player(3, "green")))
+    ser = board_1.serialize()
+    board = Board.deserialize(ser)
+    display = BoardDisplay(board)
+    display.mainloop()
+    # question = Question.get_one_question(difficulty='easy')
+    # display = QuestionDisplay(question)
+    # display.prompt_question()

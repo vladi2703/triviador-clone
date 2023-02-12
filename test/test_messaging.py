@@ -1,4 +1,3 @@
-import pytest
 from messagingutils.messaging import Message, MessageTypes, MessageHeader
 
 

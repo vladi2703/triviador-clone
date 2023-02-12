@@ -6,5 +6,6 @@ def test_process_client_message():
     message = Message(MessageTypes.GET_QUESTION, None)
     # Act
 
+
 def test_process_server_message():
     assert False

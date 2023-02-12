@@ -5,11 +5,12 @@ import threading
 
 from gameutils.question import Question
 from messagingutils.messaging import Message, MessageTypes
-from gameutils.playboard import QuestionDisplay
+from gameutils.playboard import QuestionDisplay, Board, BoardDisplay
 
 
 class Client:
     """A client that connects to a server and sends messages to it"""
+
     def __init__(self, client_host: str, client_port: int):
         self.host = client_host
         self.port = client_port
@@ -19,8 +20,11 @@ class Client:
 
         self.input_thread = None
         self.response_thread = None
-      
+
         self.still_running = False
+
+        self._board: Board | None = None
+        self._display_board: BoardDisplay | None = None
 
     # TODO: Implement return value
     async def _process_server_message(self, message: Message):
@@ -39,7 +43,15 @@ class Client:
                     Correct answer is: " + message.body["correct_answer"])
         elif message.header.message_type == MessageTypes.ACTIVE_STATUS:
             print("You've been acknowledged as active by the server.")
-
+        elif message.header.message_type == MessageTypes.BOARD:
+            print("Board received from server")
+            self._board = Board.deserialize(message.body["board"]) if message.body["board"] is not None else None
+            if self._board is not None:
+                if self._display_board is None:
+                    self._display_board = BoardDisplay(self._board)
+                else:
+                    self._display_board.update_board(self._board)
+                self._display_board.mainloop()
 
     async def receive_message(self):
         """Receive a message from the server and process it"""
@@ -78,6 +90,9 @@ class Client:
             elif command == "question":
                 message = Message(message_type=MessageTypes.GET_QUESTION)
                 self.sock.sendall(message.to_bytes())
+            elif command == "board":
+                message = Message(message_type=MessageTypes.REQUEST_BOARD)
+                self.sock.sendall(message.to_bytes())
             else:
                 print("Unknown command")
 
@@ -94,6 +109,7 @@ class Client:
 
         self.response_thread = threading.Thread(target=self._receive_message_thread)
         self.response_thread.run()
+
 
 if __name__ == "__main__":
     host, port = '127.0.0.1', 65432

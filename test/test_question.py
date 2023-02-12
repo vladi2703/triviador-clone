@@ -1,4 +1,3 @@
-import pytest
 from gameutils.question import Question
 
 EXPECTED_FIELDS = ["category", "correct_answer", "incorrect_answers", "question", "type", "difficulty"]
