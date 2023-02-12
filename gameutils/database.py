@@ -15,7 +15,7 @@ class PlayerDatabase:
 
     def add_player(self, name) -> bool:
         """Add a player to the database. Return True if the player was added, False else."""
-        if len(self.players) > 3 or self.players.get(name) != 0:
+        if len(self.players) > 3 or self.players.get(name) is not None:
             print(f"Player {name} already exists or player limit reached")
             return False
         self.players[name] = 0

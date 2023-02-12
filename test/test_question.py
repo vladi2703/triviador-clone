@@ -45,4 +45,4 @@ def test_get_url():
     result = question.get_url(amount=10, encode="utf-8")
     # Assert
     assert isinstance(result, str)
-    assert result.startswith("https://opentdb.com/api.php?amount=10&encode=utf-8")
+    assert result.startswith("https://opentdb.com/api.php?amount=10&encoding=utf-8")

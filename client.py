@@ -1,10 +1,11 @@
 """A client that connects to a server and sends messages to it"""
+import asyncio
 import socket
 import threading
 
-
+from gameutils.question import Question
 from messagingutils.messaging import Message, MessageTypes
-from gameutils.game import Game
+from gameutils.playboard import QuestionDisplay
 
 
 class Client:
@@ -21,7 +22,26 @@ class Client:
       
         self.still_running = False
 
-    def receive_message(self):
+    # TODO: Implement return value
+    async def _process_server_message(self, message: Message):
+        """Process a message from the server."""
+        if message.header.message_type == MessageTypes.QUESTION:
+            print("Question received from server")
+            question = Question.from_json_for_client(message.body["question_data"])
+            display_question = QuestionDisplay(question)
+            answer = await display_question.prompt_question()
+            print(answer)
+            return Message(MessageTypes.ANSWER, {"answer": answer}).to_bytes()
+        elif message.header.message_type == MessageTypes.CORRECT_ANSWER:
+            print("Correct answer!")
+        elif message.header.message_type == MessageTypes.INCORRECT_ANSWER:
+            print("Unfortunately, your answer is incorrect. \
+                    Correct answer is: " + message.body["correct_answer"])
+        elif message.header.message_type == MessageTypes.ACTIVE_STATUS:
+            print("You've been acknowledged as active by the server.")
+
+
+    async def receive_message(self):
         """Receive a message from the server and process it"""
         while self.still_running:
             print("Waiting for message from server")
@@ -35,7 +55,7 @@ class Client:
                 print(f"Received {data} from server")
                 message = Message.from_bytes(data)
                 print(f"Received {message} from server")
-                response = Game.process_server_message(message)
+                response = await self._process_server_message(message)
                 if response is not None:
                     self.sock.sendall(response)
             if not data:
@@ -43,6 +63,7 @@ class Client:
                 self.sock.close()
                 self.still_running = False
                 break
+
     def repl(self):
         """Read-eval-print loop"""
         print("Welcome!")
@@ -60,14 +81,19 @@ class Client:
             else:
                 print("Unknown command")
 
+    def _receive_message_thread(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.receive_message())
+
     def run(self):
         """Start the client"""
         self.still_running = True
         self.input_thread = threading.Thread(target=self.repl)
         self.input_thread.start()
 
-        self.response_thread = threading.Thread(target=self.receive_message)
-        self.response_thread.start()
+        self.response_thread = threading.Thread(target=self._receive_message_thread)
+        self.response_thread.run()
 
 if __name__ == "__main__":
     host, port = '127.0.0.1', 65432

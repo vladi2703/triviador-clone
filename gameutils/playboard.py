@@ -1,8 +1,11 @@
 """A class representing the game board"""
-
+import asyncio
+import threading
 import tkinter as tk
+from functools import partial
 from itertools import cycle
 from typing import NamedTuple, Tuple, List
+from gameutils.question import Question
 
 
 class Player(NamedTuple):
@@ -108,7 +111,65 @@ class BoardDisplay(tk.Tk):
                 self.display.config(text=f"{self.board.current_player.name} turn")
 
 
+class QuestionDisplay:
+    """A class representing the question display"""
+
+    def __init__(self, question_to_display: Question, time_for_answer=10):
+        self.question = question_to_display
+        self.root = tk.Tk()
+        self.root.title("Question")
+        self.root.geometry("600x600")
+        self.question_label = tk.Label(self.root, text=self.question.question,
+                                       font=("Arial", 20), wraplength=500, justify=tk.CENTER)
+        self.question_label.pack(pady=20)
+
+        self._buttons = []
+        # add buttons for possible answers
+        for i, answer in enumerate(self.question.possible_answers):
+            self._buttons.append(
+                tk.Button(self.root, text=answer, font=("Arial", 15),
+                          command=partial(self._check_answer, answer))
+            )
+            self._buttons[i].pack(pady=10)
+
+        self._answer: str = ""
+        self._answer_event = threading.Event()
+        self._time_for_answer = time_for_answer
+
+    def _check_answer(self, answer):
+        """Return answer to client. Give feedback to user. Wait 2-3 seconds and then close window."""
+        if self._answer != "":
+            return
+        label = tk.Label(self.root, text=f"answer given: {answer}", font=("Arial", 20))
+        label.pack()
+        self._answer = answer
+        self.root.update()
+        self._answer_event.set()
+        # Todo: send message to server. Give feedback to user. Wait 2-3 seconds and then close window.
+
+    async def close_app_timer(self):
+        """Close the app after a given time"""
+        self._answer_event.wait(4)
+        self.root.destroy()
+
+    async def prompt_question(self) -> str or None:
+        """Prompt the question to the user and return the answer. If no answer is given, return None"""
+        # TODO: ANSWER comes only when the user closes the window. Implement a timer to close the window
+
+        self.root.mainloop()
+        # self.root.after(1000, self.root.destroy)
+        self._answer_event.wait(self._time_for_answer)
+        self.root.update()
+        if self._answer == "":
+            return None
+        else:
+            return self._answer
+
+
 if __name__ == "__main__":
-    board = Board(players=(Player(1, "red"), Player(2, "blue"), Player(3, "green")))
-    display = BoardDisplay(board)
-    display.mainloop()
+    # board = Board(players=(Player(1, "red"), Player(2, "blue"), Player(3, "green")))
+    # display = BoardDisplay(board)
+    # display.mainloop()
+    question = Question.get_one_question(difficulty='easy')
+    display = QuestionDisplay(question)
+    display.prompt_question()

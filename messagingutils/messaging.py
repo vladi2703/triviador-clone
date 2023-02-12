@@ -32,7 +32,7 @@ class MessageHeader:
     def from_bytes(cls, data):
         print(json.loads(data.decode()))
         json_data = json.loads(data.decode())
-        return cls(MessageTypes(MessageTypes(json_data["message_type"])), json_data["body_len"])
+        return cls(MessageTypes(json_data["message_type"]), json_data["body_len"])
 
     def __str__(self):
         return f"{self.message_type=} \n {self.body_len=}"

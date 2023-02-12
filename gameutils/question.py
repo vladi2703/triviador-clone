@@ -1,6 +1,5 @@
 import html
 
-
 import requests
 
 
@@ -36,7 +35,8 @@ class Question:
             "category": self.category,
             "type": self.question_type,
             "difficulty": self.difficulty,
-            "possible_answers": self.incorrect_answers + [self.correct_answer],
+            "possible_answers": self.incorrect_answers + [
+                self.correct_answer] if self.possible_answers is None else self.possible_answers,
             "question": self.question,
         }
 
@@ -75,6 +75,7 @@ class Question:
             params["encoding"] = encode
 
         return requests.Request("GET", base_url, params=params).prepare().url
+
     @staticmethod
     def get_questions_by_params(category=None, difficulty=None, q_type=None, amount=10, encode="utf-8") -> list:
         """Get questions from the API. Returns a list of Question objects."""
@@ -98,5 +99,3 @@ class Question:
             return questions
         else:
             raise Exception("Error getting questions, status code: " + str(response.status_code))
-
-

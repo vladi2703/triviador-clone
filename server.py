@@ -60,7 +60,8 @@ class Server:
         received_data = sock.recv(1024)  # TODO: Fix hard-coded buffer size
         if received_data:
             message = message.from_bytes(received_data)
-            response = self.game.process_client_message(message, self.player_database)
+            response = self.game.process_client_message(message,
+                                                        self.player_database, player_name=sock.getpeername()[1])
             if response is not None:
                 self.message_queue_dict[sock.getsockname()[1]].add_message(response)
             else:
