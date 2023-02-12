@@ -10,7 +10,7 @@ class PlayerDatabase:
         if os.path.exists(self.filename):
             with open(self.filename, 'r') as f:
                 for line in f:
-                    name, score = line.strip().split()  # TODO: fix format error
+                    name, score = line.strip().split()
                     self.players[name] = int(score)
 
     def add_player(self, name) -> bool:

@@ -51,10 +51,6 @@ class Server:
     def accept_wrapper(self, sock):
         conn, addr = sock.accept()
         _, pesho = addr
-        if not self.player_database.add_player(pesho):  # player name is the address
-            pass  # TODO: Send message to client that the name is already taken
-            # sock.close()
-            # return
         print(f"Accepted connection from {addr}")
         self.message_queue_dict[pesho] = MessageQueue()
 
@@ -62,11 +58,12 @@ class Server:
 
         default_player_count = 3
         if len(self.message_queue_dict) >= default_player_count:
-            # TODO: Send message to all clients that the game is starting
             colors = ['red', 'blue', 'green']
             keys = list(self.message_queue_dict.keys())[:default_player_count]  # map color to each connected player
             players = [Player(keys[i], colors[i]) for i in range(default_player_count)]
             self.board = Board(players=players)
+            for(player_id, message_queue) in self.message_queue_dict.items():
+                message_queue.add_message(Message(MessageTypes.BOARD, {"board": self.board.serialize()}))
 
         conn.setblocking(False)
         message = Message(MessageTypes.ACTIVE_STATUS, None)
@@ -74,7 +71,7 @@ class Server:
         self.sel.register(conn, selectors.EVENT_READ | selectors.EVENT_WRITE, data=message)
 
     def read(self, message, sock):
-        received_data = sock.recv(1024)  # TODO: Fix hard-coded buffer size
+        received_data = sock.recv(1024)
         if received_data:
             message = message.from_bytes(received_data)
             response = self.game.process_client_message(message,

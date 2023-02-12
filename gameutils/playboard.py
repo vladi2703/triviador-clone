@@ -1,11 +1,11 @@
 """A module representing the game board"""
 import json
-import pickle
 import threading
 import tkinter as tk
 from functools import partial
 from itertools import cycle
 from typing import NamedTuple, Tuple, List
+
 from gameutils.question import Question
 
 
@@ -41,6 +41,7 @@ DEFAULT_BOARD_SIZE = 3
 
 class Board:
     """A class representing the game board. Contains the board and the players and the current player"""
+
     def __init__(self, board_size=DEFAULT_BOARD_SIZE, players=None):
         self.board_size = board_size
         self.board: List[List[Turn]] = []  # 2D array of turns
@@ -87,11 +88,11 @@ class Board:
 
     def serialize(self) -> str:
         """Serialize the board"""
-        board = [[cell.to_dict() for cell in row] for row in self.board]
+        board_dict = [[cell.to_dict() for cell in row] for row in self.board]
         players = [player.to_dict() for player in self.players]
         return json.dumps({
             'board_size': self.board_size,
-            'board': board,
+            'board': board_dict,
             'players': players,
             'current_player': self.current_player.to_dict(),
             'current_turns': [turn.to_dict() for turn in self._current_turns],
@@ -114,10 +115,11 @@ class Board:
 
 class BoardDisplay(tk.Tk):
     """A class responsible for displaying the board and handling the user input"""
-    def __init__(self, board: Board):
+
+    def __init__(self, board_to_display: Board):
         super().__init__()
         self.title("Epic battle arena")
-        self.board = board
+        self.board = board_to_display
         self._cities = {}
         self._setup_display()
         self._widgets: List[List[tk.Button | None]] = [[None for _ in range(self.board.board_size)]
@@ -157,9 +159,9 @@ class BoardDisplay(tk.Tk):
                 self.board.next_turn()
                 self.display.config(text=f"{self.board.current_player.name} turn")
 
-    def update_board(self, board: Board):
+    def update_board(self, new_board: Board):
         """Update the board"""
-        self.board = board
+        self.board = new_board
         for row in range(self.board.board_size):
             for col in range(self.board.board_size):
                 self._widgets[row][col].config(bg=self.board.board[row][col].color)
@@ -200,7 +202,6 @@ class QuestionDisplay:
         self._answer = answer
         self.root.update()
         self._answer_event.set()
-        # Todo: send message to server. Give feedback to user. Wait 2-3 seconds and then close window.
 
     async def close_app_timer(self):
         """Close the app after a given time"""
@@ -209,7 +210,7 @@ class QuestionDisplay:
 
     async def prompt_question(self) -> str or None:
         """Prompt the question to the user and return the answer. If no answer is given, return None"""
-        # TODO: ANSWER comes only when the user closes the window. Implement a timer to close the window
+        # answer comes after closing the window
 
         self.root.mainloop()
         # self.root.after(1000, self.root.destroy)

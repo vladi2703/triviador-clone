@@ -26,7 +26,6 @@ class Client:
         self._board: Board | None = None
         self._display_board: BoardDisplay | None = None
 
-    # TODO: Implement return value
     async def _process_server_message(self, message: Message):
         """Process a message from the server."""
         if message.header.message_type == MessageTypes.QUESTION:
