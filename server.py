@@ -9,6 +9,7 @@ from messagingutils.messageq import MessageQueue
 
 
 class Server:
+    """A server that handles incoming connections and messages."""
     def __init__(self, host: str, port: int, game: Game):
         if port < 1024:
             raise ValueError("Port must be greater than 1024")
@@ -55,10 +56,13 @@ class Server:
         self.message_queue_dict[pesho] = MessageQueue()
 
         print(f"Current players: {self.message_queue_dict.keys()}, len: {len(self.message_queue_dict)}")
-        if len(self.message_queue_dict) >= 3:
+
+        default_player_count = 3
+        if len(self.message_queue_dict) >= default_player_count:
+            # TODO: Send message to all clients that the game is starting
             colors = ['red', 'blue', 'green']
-            keys = list(self.message_queue_dict.keys())[:3]
-            players = [Player(keys[i], colors[i]) for i in range(3)]
+            keys = list(self.message_queue_dict.keys())[:default_player_count]  # map color to each connected player
+            players = [Player(keys[i], colors[i]) for i in range(default_player_count)]
             self.board = Board(players=players)
 
         conn.setblocking(False)

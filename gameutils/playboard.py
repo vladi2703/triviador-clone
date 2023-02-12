@@ -10,6 +10,7 @@ from gameutils.question import Question
 
 
 class Player(NamedTuple):
+    """A class representing a player"""
     name: int
     color: str
 
@@ -22,6 +23,7 @@ class Player(NamedTuple):
 
 
 class Turn(NamedTuple):
+    """A class representing a turn"""
     row: int
     col: int
     color: str = "white"
@@ -38,6 +40,7 @@ DEFAULT_BOARD_SIZE = 3
 
 
 class Board:
+    """A class representing the game board. Contains the board and the players and the current player"""
     def __init__(self, board_size=DEFAULT_BOARD_SIZE, players=None):
         self.board_size = board_size
         self.board: List[List[Turn]] = []  # 2D array of turns
@@ -110,6 +113,7 @@ class Board:
 
 
 class BoardDisplay(tk.Tk):
+    """A class responsible for displaying the board and handling the user input"""
     def __init__(self, board: Board):
         super().__init__()
         self.title("Epic battle arena")
@@ -162,7 +166,7 @@ class BoardDisplay(tk.Tk):
 
 
 class QuestionDisplay:
-    """A class representing the question display"""
+    """A class responsible for displaying a question and handling the user input"""
 
     def __init__(self, question_to_display: Question, time_for_answer=10):
         self.question = question_to_display

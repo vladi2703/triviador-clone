@@ -4,6 +4,8 @@ import requests
 
 
 class Question:
+    """A class representing a question. Contains the question, the correct answer and the incorrect answers.
+    Can be serialized to json and back. Can fetch a question from the API by given parameters."""
     def __init__(self, category, question_type, difficulty, question, correct_answer=None, incorrect_answers=None,
                  possible_answers=None):
         self.category = category

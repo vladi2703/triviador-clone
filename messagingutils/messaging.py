@@ -39,21 +39,6 @@ class MessageHeader:
     def __str__(self):
         return f"{self.message_type=} \n {self.body_len=}"
 
-# Todo: remove this class if not needed
-# class MessageBody:
-#     def __init__(self, body: dict):
-#         self.body = body
-#
-#     def to_bytes(self):
-#         return json.dumps(self.body).encode()
-#
-#     @classmethod
-#     def from_bytes(cls, data):
-#         return cls(**json.loads(data.decode()))
-#
-#     def __str__(self):
-#         return f"{self.body=}"
-
 
 class Message:
     """Message class. Contains header and body. Body is a dict."""
