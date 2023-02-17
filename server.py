@@ -53,7 +53,7 @@ class Server:
         _, pesho = addr
         print(f"Accepted connection from {addr}")
         self.message_queue_dict[pesho] = MessageQueue()
-
+        self.player_database.add_player(pesho)
         print(f"Current players: {self.message_queue_dict.keys()}, len: {len(self.message_queue_dict)}")
 
         default_player_count = 3
