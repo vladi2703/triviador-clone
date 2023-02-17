@@ -240,4 +240,4 @@ fabric.properties
 resources/
 
 # archive file
-.zip
+*.zip
