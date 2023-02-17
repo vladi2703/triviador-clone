@@ -65,6 +65,7 @@ class Server:
             for(player_id, message_queue) in self.message_queue_dict.items():
                 message_queue.add_message(Message(MessageTypes.BOARD, {"board": self.board.serialize()}))
             curr_player = self.board.current_player
+            print(f"Current player: {curr_player.name}")
             self.message_queue_dict[curr_player.name].add_message(Message(MessageTypes.REQUEST_MOVE_PLAYER, None))
         conn.setblocking(False)
 
