@@ -238,3 +238,6 @@ fabric.properties
 
 # database file
 resources/
+
+# archive file
+.zip
