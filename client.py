@@ -2,6 +2,7 @@
 import asyncio
 import socket
 import threading
+from asyncio import sleep
 
 from gameutils.question import Question
 from messagingutils.messaging import Message, MessageTypes
@@ -26,6 +27,8 @@ class Client:
         self._board: Board | None = None
         self._display_board: BoardDisplay | None = None
 
+        self.name: int = -1
+
     async def _process_server_message(self, message: Message):
         """Process a message from the server."""
         if message.header.message_type == MessageTypes.QUESTION:
@@ -42,22 +45,33 @@ class Client:
                     Correct answer is: " + message.body["correct_answer"])
         elif message.header.message_type == MessageTypes.ACTIVE_STATUS:
             print("You've been acknowledged as active by the server.")
+            self.name = message.body["name"]
         elif message.header.message_type == MessageTypes.BOARD:
             print("Board received from server")
             self._board = Board.deserialize(message.body["board"]) if message.body["board"] is not None else None
             if self._board is not None:
-                if self._display_board is None:
-                    self._display_board = BoardDisplay(self._board)
-                else:
-                    self._display_board.update_board(self._board)
-                display_thread = threading.Thread(target=self._display_board.mainloop())
-                display_thread.start()
+                self._display_board = BoardDisplay(self._board, self.name)
+                print('here')
+                self._display_board.mainloop()
+                try:
+                    # Wait for a response with the specified timeout
+                    response = await asyncio.wait_for(self._display_board.get_move(), 5)
+                    if response is not None:
+                        move = response
+                    else:
+                        move = None
+                except asyncio.TimeoutError:
+                    # Return None if the response is not received within the timeout
+                    move = None
+                if move is not None:
+                    message = Message(message_type=MessageTypes.MOVE_PLAYER, body={"move": move.to_dict()})
+                    self.sock.sendall(message.to_bytes())
+                    await sleep(0.2)
+                request_board = Message(message_type=MessageTypes.REQUEST_BOARD)
+                self.sock.sendall(request_board.to_bytes())
+                return None
         elif message.header.message_type == MessageTypes.REQUEST_MOVE_PLAYER:
             print("Requesting move player")
-            if self._display_board is not None:
-                self._display_board.mainloop()
-                move = await self._display_board.get_move()
-                return Message(MessageTypes.MOVE_PLAYER, {"move": move.to_dict()}).to_bytes()
 
     async def receive_message(self):
         """Receive a message from the server and process it"""

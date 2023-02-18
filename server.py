@@ -53,9 +53,10 @@ class Server:
         _, pesho = addr
         print(f"Accepted connection from {addr}")
         self.message_queue_dict[pesho] = MessageQueue()
-
+        self.player_database.add_player(pesho)
         print(f"Current players: {self.message_queue_dict.keys()}, len: {len(self.message_queue_dict)}")
 
+        self.message_queue_dict[pesho].add_message(Message(MessageTypes.ACTIVE_STATUS, {"name": pesho}))
         default_player_count = 3
         if len(self.message_queue_dict) >= default_player_count:
             colors = ['red', 'blue', 'green']
@@ -66,7 +67,6 @@ class Server:
                 message_queue.add_message(Message(MessageTypes.BOARD, {"board": self.board.serialize()}))
             curr_player = self.board.current_player
             print(f"Current player: {curr_player.name}")
-            self.message_queue_dict[curr_player.name].add_message(Message(MessageTypes.REQUEST_MOVE_PLAYER, None))
         conn.setblocking(False)
 
         message = Message(MessageTypes.ACTIVE_STATUS, None)
@@ -97,6 +97,11 @@ class Server:
         if mask & selectors.EVENT_READ:
             self.read(message, sock)
         if mask & selectors.EVENT_WRITE:
-            if self.message_queue_dict[sock.getpeername()[1]]:
-                response = self.message_queue_dict[sock.getpeername()[1]].get_top_message()
-                sock.send(response.to_bytes())
+            try:
+                name = sock.getpeername()[1]
+            except OSError:
+                print("Not a valid socket")
+                return
+        if self.message_queue_dict[sock.getpeername()[1]]:
+            response = self.message_queue_dict[sock.getpeername()[1]].get_top_message()
+            sock.send(response.to_bytes())

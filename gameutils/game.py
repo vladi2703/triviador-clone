@@ -1,7 +1,7 @@
 """Game logic for the client and server."""
 
 from gameutils.database import PlayerDatabase
-from gameutils.playboard import Board
+from gameutils.playboard import Board, Turn
 from messagingutils.messaging import Message, MessageTypes
 from gameutils.question import Question
 
@@ -36,6 +36,8 @@ class Game:
             return None
         elif message.header.message_type == MessageTypes.MOVE_PLAYER:
             if board is not None:
-                board.process_turn(message.body["move"])
+                move = Turn.from_dict(message.body["move"])
+                board.process_turn(move)
+            return Message(MessageTypes.BOARD, {"board": board.serialize()})
         else:
             raise ValueError(f"Unknown message type: {message.header.message_type}")

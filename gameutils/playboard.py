@@ -117,11 +117,13 @@ class Board:
 class BoardDisplay(tk.Tk):
     """A class responsible for displaying the board and handling the user input"""
 
-    def __init__(self, board_to_display: Board):
+    def __init__(self, board_to_display: Board, owner: int):
         super().__init__()
         self.title("Epic battle arena")
         self.board = board_to_display
         self._cities = {}
+        self.owner = owner
+
         self._setup_display()
         self._widgets: List[List[tk.Button | None]] = [[None for _ in range(self.board.board_size)]
                                                        for _ in range(self.board.board_size)]
@@ -133,7 +135,7 @@ class BoardDisplay(tk.Tk):
     def _setup_display(self):
         display_frame = tk.Frame(master=self)
         display_frame.pack(fill=tk.X)
-        self.display = tk.Label(master=display_frame, text="Welcome to the game!")
+        self.display = tk.Label(master=display_frame, text=f"[{self.owner}]Welcome to the game!")
         self.display.pack()
 
     def _create_widgets(self):
@@ -143,18 +145,23 @@ class BoardDisplay(tk.Tk):
             self.rowconfigure(row, weight=1, minsize=75)
             self.columnconfigure(row, weight=1, minsize=75)
             for col in range(self.board.board_size):
-                self._widgets[row][col] = tk.Button(master=self.board_frame, text=" ", bg='white', width=10, height=8)
+                self._widgets[row][col] = tk.Button(master=self.board_frame, text=" ",
+                                                    bg=self.board.board[row][col].color, width=10, height=8)
                 self._cities[self._widgets[row][col]] = (row, col)  # store the cell position in a dictionary
                 self._widgets[row][col].grid(row=row, column=col, sticky="nsew")
                 self._widgets[row][col].bind("<Button-1>", partial(self.process_move))
 
     def process_move(self, event):
         """Get the move from the user"""
+        if self.board.current_player.name != self.owner:
+            self._event_move.set()
+            return
         clicked_cell = event.widget
         row, col = self._cities[clicked_cell]
         turn = Turn(row, col, self.board.current_player.color)
         if self.board.is_valid_move(turn):
             self._current_move = turn
+            self.play_turn(turn)
             self._event_move.set()
 
     async def get_move(self):
@@ -168,7 +175,7 @@ class BoardDisplay(tk.Tk):
         clicked_cell = self._widgets[turn.row][turn.col]
         if self.board.is_valid_move(turn):
             self.board.process_turn(turn)
-            clicked_cell.config(bg=self.board.current_player.color)
+            clicked_cell.config(bg=turn.color)
             self.display.config(text=f"{self.board.current_player.name} turn")
             if self.board.has_winner:
                 self.display.config(text=f"{self.board.current_player.name} won!")
@@ -179,10 +186,6 @@ class BoardDisplay(tk.Tk):
     def update_board(self, new_board: Board):
         """Update the board"""
         self.board = new_board
-        for row in range(self.board.board_size):
-            for col in range(self.board.board_size):
-                self._widgets[row][col].config(bg=self.board.board[row][col].color)
-
 
 class QuestionDisplay:
     """A class responsible for displaying a question and handling the user input"""
@@ -243,7 +246,7 @@ if __name__ == "__main__":
     board_1 = Board(players=(Player(1, "red"), Player(2, "blue"), Player(3, "green")))
     ser = board_1.serialize()
     board = Board.deserialize(ser)
-    display = BoardDisplay(board)
+    display = BoardDisplay(board, 1)
     display.mainloop()
     # question = Question.get_one_question(difficulty='easy')
     # display = QuestionDisplay(question)
