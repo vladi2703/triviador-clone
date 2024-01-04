@@ -241,3 +241,9 @@ resources/
 
 # arhcive file
 *.zip
+
+# idea all
+.idea
+
+# vscode
+.vscode
